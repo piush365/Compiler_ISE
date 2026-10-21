@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compiler Explorer</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1 class="brand">Compiler Explorer <span class="brand-sub">one program, six phases</span></h1>
+  <div class="controls">
+    <label class="field">Example
+      <select id="example"></select>
+    </label>
+    <div class="field">Parser
+      <div class="seg" role="group" aria-label="Parser">
+        <button type="button" data-parser="ll" aria-pressed="true">LL(1)</button>
+        <button type="button" data-parser="slr" aria-pressed="false">SLR(1)</button>
+      </div>
+    </div>
+    <label class="field">Registers
+      <input id="regs" type="number" min="2" max="16" value="4" inputmode="numeric">
+    </label>
+    <label class="field check"><input id="opt" type="checkbox" checked> Optimize</label>
+    <button id="compile" type="button" class="primary">Compile <kbd>Ctrl ↵</kbd></button>
+  </div>
+</header>
+
+<nav class="rail" aria-label="Compiler phases">
+  <ol id="rail"></ol>
+  <button type="button" class="grammar-btn" data-phase="grammar">Grammar tables</button>
+</nav>
+
+<main class="work">
+  <section class="source" aria-label="Source program">
+    <div class="pane-head"><span>Source</span><span id="cursor" class="muted"></span></div>
+    <div class="editor">
+      <div class="gutter" id="gutter" aria-hidden="true"></div>
+      <div class="code-wrap">
+        <div class="marks" id="marks" aria-hidden="true"></div>
+        <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"
+                  aria-label="Source program"></textarea>
+      </div>
+    </div>
+    <div id="diagnostics" class="diagnostics" hidden></div>
+  </section>
+
+  <section class="listing" aria-live="polite">
+    <div class="pane-head"><span id="listing-title">Output</span><span id="listing-sub" class="muted"></span></div>
+    <div class="feed" id="feed"></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

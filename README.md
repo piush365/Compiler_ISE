@@ -84,7 +84,18 @@ To enable the AI error explainer, set at least one API key. Without them the raw
 ```bash
 export GROQ_API_KEY="your-groq-api-key"
 export GEMINI_API_KEY="your-gemini-api-key"
+export GROQ_MODEL="openai/gpt-oss-20b"       # optional: Groq model to use (this is the default)
 ```
+
+## Web UI
+
+```bash
+python3 ui/server.py                         # then open http://localhost:8000
+python3 ui/server.py --port 9000             # another port
+python3 ui/server.py --host 0.0.0.0          # reachable from other devices, e.g. a projector laptop
+```
+
+The UI runs the same compiler modules as `main.py`, using only the Python standard library. It has an editor with the example programs, an LL(1)/SLR(1) switch, a register count and an optimization toggle. A rail across the top shows the six phases plus verification. Each phase shows a live count, and the phase that fails is marked in red. Select a phase to see its output: the token table, AST, symbol table, three-address code, flow graphs drawn before and after optimization, SSA, target code, peephole results and the stage-by-stage verification. Errors are marked on their lines in the editor. For a syntax error, the AI explainer's answer appears under the parser's own error and expected tokens. Set the API keys in the same terminal before starting the server; they stay on the server and are never sent to the browser.
 
 ## AI error explainer constraint
 

@@ -36,20 +36,28 @@ Please explain in plain, beginner-friendly English why this is a syntax error ba
 """
 
     groq_api_key = os.environ.get("GROQ_API_KEY")
+    groq_error = None
     if groq_api_key and Groq is not None:
         try:
             client = Groq(api_key=groq_api_key)
+            # llama3-8b-8192 was shut down on 2025-08-30 and its replacement
+            # llama-3.1-8b-instant on 2026-08-16. gpt-oss-20b is Groq's current
+            # recommendation; set GROQ_MODEL to override when it is retired too.
             response = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model=os.environ.get("GROQ_MODEL", "openai/gpt-oss-20b"),
                 messages=[
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=300
+                # gpt-oss is a reasoning model: reasoning tokens count towards this
+                # limit, so keep the reasoning short and leave room for the answer.
+                reasoning_effort="low",
+                include_reasoning=False,
+                max_completion_tokens=1024
             )
             return response.choices[0].message.content
         except Exception as e:
             # Fallback to Gemini
-            pass
+            groq_error = str(e)
 
     gemini_api_key = os.environ.get("GEMINI_API_KEY")
     if gemini_api_key and genai is not None:
@@ -65,7 +73,7 @@ Please explain in plain, beginner-friendly English why this is a syntax error ba
     missing = []
     if not groq_api_key: missing.append("GROQ_API_KEY missing")
     elif Groq is None: missing.append("groq package not installed")
-    else: missing.append("Groq API failed")
+    else: missing.append(f"Groq API failed: {groq_error}")
     
     if not gemini_api_key: missing.append("GEMINI_API_KEY missing")
     elif genai is None: missing.append("google-generativeai package not installed")
