@@ -1,49 +1,100 @@
-# Custom Arithmetic Expression Compiler Front-End
+# Compiler_ISE: A Six-Phase Compiler in Pure Python
 
-This project implements a compiler front-end (Lexical Analysis and Syntax Analysis) for a custom arithmetic expression language in pure Python. It covers Compiler Design Modules 1 & 2 (no semantic analysis, IR generation, optimization, or code generation).
+A complete compiler for a small language with int, float and bool values, arithmetic, `if/else`, `while` and `print`. It covers all six modules of the Compiler Design syllabus, using only the Python standard library:
 
-## Project Structure
+| Module | What is implemented | Files |
+|---|---|---|
+| 1 Lexical analysis | Regex scanner with keywords, longest-match operators, line/column tracking | `lexer.py` |
+| 2 Syntax analysis | FIRST/FOLLOW, LL(1) table, recursive-descent LL(1) parser, SLR(1) parser (LR(0) items, ACTION/GOTO), AI error explainer | `grammar.py`, `parser_recursive_descent.py`, `parser_bottom_up.py`, `ai_error_explainer.py` |
+| 3 SDT & run-time environments | S-attributed (SLR) and L-attributed (LL) AST construction, type checking with coercions, hash-table symbol table (hashpjw), static storage layout, activation records | `ast_nodes.py`, `semantic.py`, `runtime.py` |
+| 4 Intermediate code | Three-address code with backpatching for booleans/if/while, quadruples, triples, indirect triples, basic blocks, flow graph, SSA form | `icg.py`, `cfg.py`, `ssa.py` |
+| 5 Code optimization | Constant folding/propagation (local + global), copy propagation, CSE, algebraic simplification, strength reduction, dead-code and unreachable-code elimination, jump optimizations, natural loops, loop-invariant code motion | `optimizer.py`, `dag.py` |
+| 6 Code generation | Register machine, getReg with register/address descriptors, DAGs, peephole optimization, machine simulator | `codegen.py`, `peephole.py`, `target.py` |
 
-*   `lexer.py`: Regex-based lexical analyzer. Tracks line/column info and generates standard tokens.
-*   `grammar.py`: Defines the CFG, computes FIRST and FOLLOW sets, and documents both the original left-recursive grammar and the transformed grammar.
-*   `parser_recursive_descent.py`: A predictive LL(1) top-down parser returning an AST.
-*   `parser_bottom_up.py`: A full SLR(1) bottom-up parser building LR(0) state machines and tables from the original CFG, printing step-by-step trace information.
-*   `ai_error_explainer.py`: A Groq API integration (with Gemini fallback) translating rigid parser errors into human-readable explanations.
-*   `main.py`: The main CLI driving testing across both parsers.
+Every run ends with a **verification** step. The program is executed as an AST, as TAC, in SSA form, as optimized TAC, and as machine code before and after peephole optimization, and all of them must produce the same output and the same final variable values.
 
-## Grammar Design
+## The language
 
-The original Context-Free Grammar (CFG) supports standard operator precedence, unary minus, and right-associative exponentiation:
-
-```bnf
-Program -> StmtList
-StmtList -> StmtList SEMI Stmt | Stmt
-Stmt -> Assignment | Expr
-Assignment -> IDENTIFIER ASSIGN Expr
-Expr -> Expr PLUS Term | Expr MINUS Term | Term
-Term -> Term STAR Unary | Term SLASH Unary | Term PERCENT Unary | Unary
-Unary -> MINUS Unary | Power
-Power -> Primary CARET Power | Primary
-Primary -> IDENTIFIER | INT | FLOAT | FUNC LPAREN Expr RPAREN | LPAREN Expr RPAREN
+```c
+n = 10; i = 0; sum = 0;               // variables are declared (and typed) by their first assignment
+while (i < n && !(i == 7)) {
+    if (i % 2 == 0 || i > 8) { sum = sum + i * 2; } else { sum = sum - 1; }
+    i = i + 1;
+}
+avg = sum / 2.5 + sqrt(n);            // int is coerced to float where needed
+ok = sum > 5 && avg != 0;
+print(sum); print(avg); print(ok);
 ```
 
-## Left-Recursion Elimination & Left-Factoring
+Operators from lowest to highest precedence: `||`, `&&`, `< <= > >= == !=`, `+ -`, `* / %`, unary `- !`, `^` (right-associative). The built-in functions are `sin`, `cos`, `log` and `sqrt`.
 
-To support the LL(1) recursive descent parser, the grammar was transformed to remove left recursion (e.g., in `Expr` and `Term`) and left-factored (e.g., separating an `IDENTIFIER` starting an assignment from an `IDENTIFIER` in a math expression). 
-*The precise transformed CFG can be found in the docstring of `grammar.py`.*
+## Grammar
 
-## AI Error Explainer Constraint
+The original (left-recursive) grammar is used by the SLR(1) parser:
 
-The compiler integrates with the Groq API (fallback to Gemini API) to explain syntax errors. 
+```bnf
+Program    -> StmtList | ε
+StmtList   -> StmtList Stmt | Stmt
+Stmt       -> Assignment SEMI | Expr SEMI | PrintStmt SEMI | IfStmt | WhileStmt | Block
+Assignment -> IDENTIFIER ASSIGN Expr
+PrintStmt  -> PRINT LPAREN Expr RPAREN
+Block      -> LBRACE StmtList RBRACE | LBRACE RBRACE
+IfStmt     -> IF LPAREN Expr RPAREN Block
+            | IF LPAREN Expr RPAREN Block ELSE Block
+            | IF LPAREN Expr RPAREN Block ELSE IfStmt
+WhileStmt  -> WHILE LPAREN Expr RPAREN Block
+Expr       -> Expr OR AndExpr | AndExpr
+AndExpr    -> AndExpr AND RelExpr | RelExpr
+RelExpr    -> Arith RelOp Arith | Arith
+Arith      -> Arith PLUS Term | Arith MINUS Term | Term
+Term       -> Term STAR Unary | Term SLASH Unary | Term PERCENT Unary | Unary
+Unary      -> MINUS Unary | NOT Unary | Power
+Power      -> Primary CARET Power | Primary
+Primary    -> IDENTIFIER | INT | FLOAT | TRUE | FALSE | FUNC LPAREN Expr RPAREN | LPAREN Expr RPAREN
+```
 
-**Why the AI feature doesn't replace the compiler:** The AI strictly acts as a translation layer. It *does not parse or compile* the code. It relies 100% on the hand-written parser detecting the invalid state, and takes the `SyntaxErrorInfo` (containing the exact offending token and the expected valid tokens computed from the FIRST/FOLLOW sets) and translates it into beginner-friendly English with a 1-line fix. 
+The left-recursion-free, left-factored version used by the LL(1) parser is in the docstring of `grammar.py`. Both grammars are checked for conflicts automatically: the LL(1) table has none, and the SLR(1) table has 85 states and no conflicts. Simple statements end with `;`, so a trailing semicolon is valid for both parsers.
 
-## Running the Compiler
+## Running
 
-Run the main CLI demonstration to see the lexer, parsers, and error explainer in action.
+```bash
+python3 main.py                              # all phases on examples/03_optimizations.src
+python3 main.py examples/04_gcd_primes.src   # any source file
+python3 main.py prog.src --parser slr        # use the SLR(1) parser and print its trace
+python3 main.py prog.src --tables            # FIRST/FOLLOW sets, LL(1) table, SLR(1) table
+python3 main.py prog.src --upto icg          # stop after: lex | parse | semantic | icg | opt | codegen
+python3 main.py prog.src --regs 2            # number of registers (watch spilling)
+python3 main.py prog.src --no-opt            # skip optimization
+python3 main.py --frontend-demo              # original Module 1-2 demo (both parsers + AI explainer)
+```
+
+Example programs in `examples/`:
+
+| File | Shows |
+|---|---|
+| `01_expressions.src` | Arithmetic and built-in functions |
+| `02_control_flow.src` | Boolean operators, if/else, while |
+| `03_optimizations.src` | Every optimization at work |
+| `04_gcd_primes.src` | Nested loops |
+| `05_semantic_errors.src` | Type errors |
+| `06_syntax_error.src` | The AI error explainer |
+
+To enable the AI error explainer, set at least one API key. Without them the raw parser error is shown instead.
 
 ```bash
 export GROQ_API_KEY="your-groq-api-key"
 export GEMINI_API_KEY="your-gemini-api-key"
-python3 main.py
 ```
+
+## AI error explainer constraint
+
+The AI does **not** parse or compile anything. The hand-written parser detects the error and computes the expected tokens from its FIRST/FOLLOW-based tables. The LLM only translates that exact `SyntaxErrorInfo` into beginner-friendly English with a one-line fix.
+
+## Tests
+
+```bash
+python3 -m unittest discover tests     # unit + end-to-end tests
+python3 tests/fuzz.py 500              # 500 random programs through every phase, both parsers, 2-4 registers
+```
+
+See `explain.md` for a detailed, viva-oriented explanation of every phase.

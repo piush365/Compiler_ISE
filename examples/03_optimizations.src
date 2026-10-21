@@ -1,0 +1,21 @@
+// A program written to give every optimization something to do
+a = 4;
+b = a * 2 + 0;          // constant folding + algebraic simplification
+c = b * 1;              // algebraic simplification
+unused = c * 100;       // dead code (overwritten below before any use)
+x = sin(0.5);           // value unknown at compile time
+i = 0;
+total = 0.0;
+while (i < 6) {
+    k = (x * 3.0 + 1.5) / 2.0;   // loop invariant -> moved to the pre-header
+    p = i * c + i * c;           // common sub-expression i * c
+    total = total + k + p;
+    i = i + 1;
+}
+sq = c ^ 2;             // strength reduction: c * c
+unused = 0;
+if (false) {            // unreachable code
+    total = 0.0;
+}
+print(total);
+print(sq);

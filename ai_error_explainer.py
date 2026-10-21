@@ -22,7 +22,7 @@ def explain_syntax_error(error_info: SyntaxErrorInfo, source_code: str) -> str:
     translation layer to turn formal compiler errors into plain English.
     """
     prompt = f"""You are a helpful compiler error explainer. 
-The hand-written parser for a custom arithmetic expression language encountered a syntax error.
+The hand-written parser for a small custom language (arithmetic, assignments, print, if/else, while, boolean expressions) encountered a syntax error.
 
 Here is the error information strictly determined by the compiler:
 - Offending Token: {error_info.token.type} (value: '{error_info.token.value}')

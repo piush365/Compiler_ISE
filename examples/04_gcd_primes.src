@@ -1,0 +1,21 @@
+// Euclid's GCD and the primes below 30
+a = 1071;
+b = 462;
+while (b != 0) {
+    t = a % b;
+    a = b;
+    b = t;
+}
+print(a);              // 21
+
+n = 2;
+while (n < 30) {
+    d = 2;
+    prime = true;
+    while (d * d <= n && prime) {
+        if (n % d == 0) { prime = false; }
+        d = d + 1;
+    }
+    if (prime) { print(n); }
+    n = n + 1;
+}

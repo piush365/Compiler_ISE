@@ -1,0 +1,3 @@
+// Missing closing parenthesis: the AI explainer turns the parser's
+// expected-token set into a plain-English hint (if an API key is set).
+y = (4 + 5 * 2;

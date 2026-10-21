@@ -1,0 +1,8 @@
+// Every line below has a semantic (type) error; the parser accepts them all.
+x = 1;
+y = x + z;              // z used before being assigned
+flag = x < 2;
+w = flag + 1;           // arithmetic on a bool
+x = 2.5;                // float into an int variable (loss of precision)
+if (x) { print(x); }    // condition is int, not bool
+m = 7.5 % 2;            // % needs int operands

@@ -25,8 +25,25 @@ class Lexer:
         ('FLOAT', r'\d+\.\d+'),          # Floating point numbers
         ('INT', r'\d+'),                 # Integers
         ('COMMENT', r'//.*'),            # Line comments
+        # Keywords must come before IDENTIFIER; \b stops "iffy" matching "if"
+        ('IF', r'\bif\b'),
+        ('ELSE', r'\belse\b'),
+        ('WHILE', r'\bwhile\b'),
+        ('PRINT', r'\bprint\b'),
+        ('TRUE', r'\btrue\b'),
+        ('FALSE', r'\bfalse\b'),
         ('FUNC', r'\b(?:sqrt|sin|cos|log)\b'), # Mathematical functions
         ('IDENTIFIER', r'[a-zA-Z_]\w*'), # Identifiers (variables)
+        # Two-character operators must come before their one-character prefixes
+        ('EQ', r'=='),
+        ('NE', r'!='),
+        ('LE', r'<='),
+        ('GE', r'>='),
+        ('LT', r'<'),
+        ('GT', r'>'),
+        ('AND', r'&&'),
+        ('OR', r'\|\|'),
+        ('NOT', r'!'),
         ('PLUS', r'\+'),                 # Addition
         ('MINUS', r'-'),                 # Subtraction
         ('STAR', r'\*'),                 # Multiplication
@@ -35,9 +52,11 @@ class Lexer:
         ('CARET', r'\^'),                # Exponentiation
         ('LPAREN', r'\('),               # Left Parenthesis
         ('RPAREN', r'\)'),               # Right Parenthesis
+        ('LBRACE', r'\{'),               # Block start
+        ('RBRACE', r'\}'),               # Block end
         ('ASSIGN', r'='),                # Assignment
         ('SEMI', r';'),                  # Semicolon
-        ('WHITESPACE', r'[ \t]+'),       # Spaces and tabs
+        ('WHITESPACE', r'[ \t\r]+'),     # Spaces, tabs (and \r of Windows line endings)
         ('NEWLINE', r'\n'),              # Line endings
         ('MISMATCH', r'.'),              # Any other character (error)
     ]

@@ -1,0 +1,7 @@
+// Module 1-2 style program: arithmetic, unary minus, right-associative ^
+y = 2.0;
+x = 5.5 + -3 * sin(y);
+z = 2 ^ 3 ^ 2;          // 2 ^ (3 ^ 2) = 512
+result = (10 % 3) / log(x);
+y = -x;
+print(x); print(z); print(result); print(y);
