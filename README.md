@@ -108,4 +108,4 @@ python3 -m unittest discover tests     # unit + end-to-end tests
 python3 tests/fuzz.py 500              # 500 random programs through every phase, both parsers, 2-4 registers
 ```
 
-See `explain.md` for a detailed, viva-oriented explanation of every phase.
+See `PROJECT_GUIDE.md` for a tour of the whole project, with one program followed through every phase, and `explain.md` for a detailed, viva-oriented explanation of every phase.
